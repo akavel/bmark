@@ -12,7 +12,7 @@ local winapi = require 'winapi'
 -- require 'winapi.monitor'
 require 'winapi.windowclass'
 -- require 'winapi.ole'  -- TODO: remove, should not be needed because included via winapi.dragdrop
-require 'winapi.dragdrop_fix'
+require 'dragdrop_fix'
 require 'winapi.uuid'
 local ffi = require 'ffi'
 
