@@ -9,8 +9,11 @@
 -- TODO: [LATER] tray icon
 
 local winapi = require 'winapi'
--- require'winapi.monitor'
-require'winapi.windowclass'
+-- require 'winapi.monitor'
+require 'winapi.windowclass'
+-- require 'winapi.ole'  -- TODO: remove, should not be needed because included via winapi.dragdrop
+require 'winapi.dragdrop'
+local ffi = require 'ffi'
 
 -- -- info about the monitor which currently has mouse cursor
 -- local moninfo = GetMonitorInfo(MonitorFromPoint(GetCursorPos(), MONITOR_DEFAULTTONEAREST))
@@ -19,6 +22,11 @@ local win = winapi.Window{
 	title = 'bmark',
 	autoquit = true,
 }
+
+IDropTarget = ffi.new 'IDropTargetVtbl'
+if false then
+	winapi.RegisterDragDrop(win.hwnd, drop_target)
+end
 
 -- pass control to the GUI system & message loop
 os.exit(winapi.MessageLoop())
