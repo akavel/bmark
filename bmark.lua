@@ -13,6 +13,8 @@
 -- them for browsing & clicking.
 -- TODO: [LATER] tray icon
 
+FILE = '/Mateusz/bmark.md'
+
 local expat = require 'expat'
 local ffi = require 'ffi'
 local winapi = require 'winapi'
