@@ -5,6 +5,7 @@
 setfenv(1, require'winapi')
 require'winapi.ole'
 require'winapi.idataobject'
+require'winapi.uuid'
 
 DRAGDROP_S_FIRST               = 0x00040100
 DRAGDROP_S_LAST                = 0x0004010F
@@ -29,6 +30,8 @@ TYMED_GDI       = 16
 TYMED_MFPICT    = 32
 TYMED_ENHMF     = 64
 TYMED_NULL      = 0
+
+-- IID_IDropTarget = UuidFromString '00000122-0000-0000-C000-000000000046'
 
 ffi.cdef([[
 typedef struct IDropTarget IDropTarget;
@@ -122,4 +125,14 @@ function RevokeDragDrop(...) return checkz(ole32.RevokeDragDrop(...)) end
 function DoDragDrop(...) return checkz(ole32.DoDragDrop(...)) end
 
 ReleaseStgMedium = ole32.ReleaseStgMedium
+
+-- FIXME(akavel): move below to winapi/ole.lua
+
+require'winapi.uuid'
+E_UNEXPECTED = 0x8000FFFF
+S_OK = 0
+S_FALSE = 1
+-- check that function returned S_OK or S_FALSE; very common esp. in OLE interfaces
+checkole = checkwith(function(ret) return ret == 0 or ret == 1 end)
+-- IID_IUnknown = UuidFromString '00000000-0000-0000-C000-000000000046'
 
