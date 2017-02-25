@@ -54,10 +54,10 @@ IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
 	local enum = ffi.new 'IEnumFORMATETC*[1]'
 	winapi.checkz(pDataObj.lpVtbl.EnumFormatEtc(pDataObj, winapi.DATADIR_GET, enum))
-	local f = ffi.new 'FORMATETC[1]'
+	local f = ffi.new 'FORMATETC'
 	for i = 1,20 do
 		-- print(i)
-		f[0].ptd = nil
+		f.ptd = nil
 		local ok, next = pcall(enum[0].lpVtbl.Next, enum[0], 1, f, nil)
 		if not ok then
 			print('err:', next)
@@ -65,10 +65,10 @@ IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 		end
 		-- print('next-ed')
 		if next == S_OK then
-			local name = winapi.CF_NAMES[f[0].cfFormat] or winapi.mbs(winapi.GetClipboardFormatName(f[0].cfFormat)) or ''
-			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f[0].cfFormat, f[0].dwAspect, f[0].tymed, name))
-			if f[0].ptd ~= nil then
-				winapi.CoTaskMemFree(f[0].ptd)
+			local name = winapi.CF_NAMES[f.cfFormat] or winapi.mbs(winapi.GetClipboardFormatName(f.cfFormat)) or ''
+			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f.cfFormat, f.dwAspect, f.tymed, name))
+			if f.ptd ~= nil then
+				winapi.CoTaskMemFree(f.ptd)
 			end
 		else
 			-- print(i)
