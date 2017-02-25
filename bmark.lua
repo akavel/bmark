@@ -29,10 +29,10 @@ IID_IUnknown    = winapi.UuidFromString '00000000-0000-0000-C000-000000000046'
 IID_IDropTarget = winapi.UuidFromString '00000122-0000-0000-C000-000000000046'
 E_UNEXPECTED = 0x8000FFFF
 -- TODO(akavel): is [1] required in both of the below structs? or maybe in none?
-IDropTargetVtbl = ffi.new 'IDropTargetVtbl[1]'
-IDropTarget = ffi.new 'IDropTarget[1]'
-IDropTarget[0].lpVtbl = IDropTargetVtbl
-IDropTargetVtbl[0].QueryInterface = function(this, riid, ppvObject)
+IDropTargetVtbl = ffi.new 'IDropTargetVtbl'
+IDropTarget = ffi.new 'IDropTarget'
+IDropTarget.lpVtbl = IDropTargetVtbl
+IDropTargetVtbl.QueryInterface = function(this, riid, ppvObject)
 	-- NOTE(akavel): REFIID = *IID = *GUID
 	print('QueryInterface!')
 	print(riid)
@@ -40,14 +40,14 @@ IDropTargetVtbl[0].QueryInterface = function(this, riid, ppvObject)
 	print(riid == IID_IDropTarget)
 	return winapi.E_NOINTERFACE
 end
-IDropTargetVtbl[0].AddRef = function(this)
+IDropTargetVtbl.AddRef = function(this)
 	print('AddRef!')
 	return 0
 end
-IDropTargetVtbl[0].Release = function(this)
+IDropTargetVtbl.Release = function(this)
 	return 0
 end
-IDropTargetVtbl[0].DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
+IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
 	return E_UNEXPECTED
 end
