@@ -28,6 +28,7 @@ local win = winapi.Window{
 	autoquit = true,
 }
 
+local effect
 local drop_target = simpleDropTarget{
 	DragEnter = function(pDataObj, grfKeyState, pt, pdwEffect)
 		local formats = dragDropFormats(pDataObj)
@@ -44,12 +45,19 @@ local drop_target = simpleDropTarget{
 		print(dragDropGetData(pDataObj, f))
 		print(string.format('0x%x',pdwEffect[0]))
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
-			pdwEffect[0] = winapi.DROPEFFECT_LINK
+			effect = winapi.DROPEFFECT_LINK
 		elseif winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_COPY) then
-			pdwEffect[0] = winapi.DROPEFFECT_COPY
+			effect = winapi.DROPEFFECT_COPY
+		else
+			effect = winapi.DROPEFFECT_NONE
 		end
-		return winapi.E_UNEXPECTED
-	end
+		pdwEffect[0] = effect
+		return winapi.S_OK
+	end,
+	DragOver = function(grfKeyState, pt, pdwEffect)
+		pdwEffect[0] = effect
+		return winapi.S_OK
+	end,
 }
 winapi.RegisterDragDrop(win.hwnd, drop_target)
 -- TODO: winapi.RevokeDragDrop()
