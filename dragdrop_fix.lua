@@ -126,6 +126,26 @@ function DoDragDrop(...) return checkz(ole32.DoDragDrop(...)) end
 
 ReleaseStgMedium = ole32.ReleaseStgMedium
 
+function SimpleDropTarget(methods)
+	assert(type(methods)=='table')
+	local IDropTarget = ffi.new 'IDropTarget'
+	IDropTarget.lpVtbl = ffi.new 'IDropTargetVtbl'
+	-- NOTE(akavel): it looks like the default IUnknown methods can be "empty" and RegisterDragDrop will work OK
+	IDropTarget.lpVtbl.QueryInterface = function(this, riid, ppvObject) return E_NOINTERFACE end
+	IDropTarget.lpVtbl.AddRef = function(this) return 0 end
+	IDropTarget.lpVtbl.Release = function(this) return 0 end
+	IDropTarget.lpVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
+		if methods.DragEnter == nil then return E_UNEXPECTED end
+		local ok, res = glue.pcall(methods.DragEnter, pDataObj, grfKeyState, pt, pdwEffect)
+		if not ok then
+			io.stderr:write(res)
+			return E_UNEXPECTED
+		end
+		return res
+	end
+	return IDropTarget
+end
+
 -- FIXME(akavel): move below to winapi/ole.lua
 
 require'winapi.uuid'

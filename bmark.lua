@@ -53,7 +53,7 @@ IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	end
 	return res
 end
-dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
+dragenter = function(pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
 	local enum = ffi.new 'IEnumFORMATETC*[1]'
 	winapi.checkz(pDataObj:EnumFormatEtc(winapi.DATADIR_GET, enum))
@@ -90,7 +90,8 @@ dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	enum[0]:Release()
 	return winapi.E_UNEXPECTED
 end
-winapi.RegisterDragDrop(win.hwnd, IDropTarget)
+winapi.RegisterDragDrop(win.hwnd, winapi.SimpleDropTarget{DragEnter = dragenter})
+-- winapi.RegisterDragDrop(win.hwnd, IDropTarget)
 -- TODO: winapi.RevokeDragDrop()
 
 -- pass control to the GUI system & message loop
