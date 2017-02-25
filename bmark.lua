@@ -15,6 +15,7 @@ require 'winapi.windowclass'
 require 'dragdrop_fix'
 require 'winapi.uuid'
 require 'winapi.clipboard'
+require 'winapi.memory'
 local ffi = require 'ffi'
 
 -- -- info about the monitor which currently has mouse cursor
@@ -51,6 +52,14 @@ IDropTargetVtbl.Release = function(this)
 	return 0
 end
 IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
+	ok, res = pcall(dragenter, this, pDataObj, grfKeyState, pt, pdwEffect)
+	if not ok then
+		print('ERROR: '..res)
+		return E_UNEXPECTED
+	end
+	return res
+end
+dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
 	local enum = ffi.new 'IEnumFORMATETC*[1]'
 	winapi.checkz(pDataObj.lpVtbl.EnumFormatEtc(pDataObj, winapi.DATADIR_GET, enum))
@@ -69,12 +78,36 @@ IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f.cfFormat, f.dwAspect, f.tymed, name))
 			if f.ptd ~= nil then
 				winapi.CoTaskMemFree(f.ptd)
+				f.ptd = nil
+			end
+			if name == 'HTML Format' then
+				if f.dwAspect==1 and f.tymed==1 then
+					print 'med'
+					local medium = ffi.new 'STGMEDIUM'
+					print 'getdata'
+					winapi.checkz(pDataObj.lpVtbl.GetData(pDataObj, f, medium))
+					print 'hglobal'
+					local hglobal = medium.hGlobal
+					print 'lock'
+					p = winapi.checknz(winapi.GlobalLock(hglobal))
+					print 'globsize'
+					local sz = winapi.GlobalSize(hglobal)
+					print('#', sz)
+					print(ffi.string(p, sz))
+					-- print(winapi.mbs(ffi.cast('CHAR*', p)))
+					winapi.GlobalUnlock(hglobal)
+					print 'release'
+					winapi.ReleaseStgMedium(medium)
+				else
+					print(('got "HTML Format", but unexpected dwAspect=%d and tymed=%d'):format(
+						f.dwAspect, f.tymed))
+				end
 			end
 		else
 			-- print(i)
 		end
 	end
-	pDataObj.lpVtbl.Release(enum[0])
+	enum[0].lpVtbl.Release(enum[0])
 	return E_UNEXPECTED
 end
 winapi.RegisterDragDrop(win.hwnd, IDropTarget)
