@@ -18,8 +18,9 @@ FILE = '/Mateusz/bmark.md'
 local expat = require 'expat'
 local ffi = require 'ffi'
 local winapi = require 'winapi'
-require 'winapi.monitor'
+require 'winapi.buttonclass'
 require 'winapi.editclass'
+require 'winapi.monitor'
 require 'winapi.windowclass'
 require 'dragdrop'
 
@@ -29,7 +30,7 @@ local moninfo = winapi.GetMonitorInfo(winapi.MonitorFromPoint(winapi.GetCursorPo
 local maxw, maxh = moninfo.work_rect.w, moninfo.work_rect.h
 local w, h = maxw/4, maxh/3
 local win = winapi.Window{
-	title = 'bmark',
+	title = FILE..'- bmark',
 	autoquit = true,
 	-- bottom-right corner of screen
 	x = moninfo.work_rect.left + maxw-w,
@@ -49,10 +50,18 @@ local edit = winapi.Edit{
 	h = h,
 }
 
-function edit:on_parent_resizing(windowpos)
+local add = winapi.Button{
+	parent = win,
+	text = '&Add',
+}
+
+function win:on_resizing()
 	local region = win:get_client_rect()
-	self:resize(region.x2, region.y2)
+	add:resize(region.x2, add.h)
+	edit:resize(region.x2, region.y2-add.h)
+	add:move(0, edit.h)
 end
+win:on_resizing()
 
 local effect
 local drop_target = simpleDropTarget{
