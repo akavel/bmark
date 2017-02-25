@@ -136,3 +136,14 @@ S_FALSE = 1
 checkole = checkwith(function(ret) return ret == 0 or ret == 1 end)
 -- IID_IUnknown = UuidFromString '00000000-0000-0000-C000-000000000046'
 
+--allow obj:method(...) instead of obj.lpVtbl.method(obj, ...)
+ole_meta = {__index = function(self, k) return self.lpVtbl[k] end}
+
+-- FIXME(akavel): move below to winapi/ienumformatetc.lua
+
+ffi.metatype('IEnumFORMATETC', ole_meta)
+
+-- FIXME(akavel): move below to winapi/idataobject.lua
+
+ffi.metatype('IDataObject', ole_meta)
+

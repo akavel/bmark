@@ -56,15 +56,11 @@ end
 dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
 	local enum = ffi.new 'IEnumFORMATETC*[1]'
-	winapi.checkz(pDataObj.lpVtbl.EnumFormatEtc(pDataObj, winapi.DATADIR_GET, enum))
+	winapi.checkz(pDataObj:EnumFormatEtc(winapi.DATADIR_GET, enum))
 	local f = ffi.new 'FORMATETC'
 	for i = 1,20 do
 		f.ptd = nil
-		local ok, next = pcall(enum[0].lpVtbl.Next, enum[0], 1, f, nil)
-		if not ok then
-			print('err:', next)
-			next = winapi.S_FALSE
-		end
+		local next = enum[0]:Next(1, f, nil)
 		if next == winapi.S_OK then
 			local name = winapi.CF_NAMES[f.cfFormat] or winapi.mbs(winapi.GetClipboardFormatName(f.cfFormat)) or ''
 			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f.cfFormat, f.dwAspect, f.tymed, name))
@@ -75,7 +71,7 @@ dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 			if name == 'HTML Format' then
 				if f.dwAspect==1 and f.tymed==1 then
 					local medium = ffi.new 'STGMEDIUM'
-					winapi.checkz(pDataObj.lpVtbl.GetData(pDataObj, f, medium))
+					winapi.checkz(pDataObj:GetData(f, medium))
 					local hglobal = medium.hGlobal
 					p = winapi.checknz(winapi.GlobalLock(hglobal))
 					local sz = winapi.GlobalSize(hglobal)
@@ -91,7 +87,7 @@ dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 			end
 		end
 	end
-	enum[0].lpVtbl.Release(enum[0])
+	enum[0]:Release()
 	return winapi.E_UNEXPECTED
 end
 winapi.RegisterDragDrop(win.hwnd, IDropTarget)
