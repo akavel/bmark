@@ -164,6 +164,10 @@ ole_meta = {__index = function(self, k) return self.lpVtbl[k] end}
 
 require'winapi.ienumformatetc'
 ffi.metatype('IEnumFORMATETC', ole_meta)
+DVASPECT_CONTENT    = 1
+DVASPECT_THUMBNAIL  = 2
+DVASPECT_ICON       = 4
+DVASPECT_DOCPRINT   = 8
 
 -- FIXME(akavel): move below to winapi/idataobject.lua
 

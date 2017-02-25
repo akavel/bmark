@@ -28,18 +28,17 @@ local drop_target = winapi.simpleDropTarget{
 	DragEnter = function(pDataObj, grfKeyState, pt, pdwEffect)
 		print 'DragEnter!'
 		local formats = dragDropFormats(pDataObj)
-		local htmlFormat = formats['HTML Format']
-		if not htmlFormat then
+		local f = formats['HTML Format']
+		if not f then
 			return winapi.E_UNEXPECTED
 		end
-		local f = htmlFormat
-		if f.dwAspect==1 and f.tymed==1 then
-			-- print('good')
-			print(dragDropGetData(pDataObj, f))
-		else
-			print(('got "HTML Format", but unexpected dwAspect=%d and tymed=%d'):format(
-				f.dwAspect, f.tymed))
+		if not winapi.getbit(f.tymed, winapi.TYMED_HGLOBAL) then
+			print(('error: got "HTML format", but without expected TYMED_HGLOBAL; tymed=%d'):format(f.tymed))
+			return winapi.E_UNEXPECTED
 		end
+		f.dwAspect = winapi.DVASPECT_CONTENT
+		f.tymed = winapi.TYMED_HGLOBAL
+		print(dragDropGetData(pDataObj, f))
 		return winapi.E_UNEXPECTED
 	end
 }
