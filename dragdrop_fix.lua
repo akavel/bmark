@@ -114,6 +114,7 @@ HRESULT DoDragDrop(LPDATAOBJECT pDataObj, LPDROPSOURCE pDropSource,
             DWORD dwOKEffects, LPDWORD pdwEffect);
 
 void ReleaseStgMedium(LPSTGMEDIUM);
+void CoTaskMemFree(LPVOID pv);
 ]])
 
 function RegisterDragDrop(...) return checkz(ole32.RegisterDragDrop(...)) end

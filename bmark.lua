@@ -14,6 +14,7 @@ require 'winapi.windowclass'
 -- require 'winapi.ole'  -- TODO: remove, should not be needed because included via winapi.dragdrop
 require 'dragdrop_fix'
 require 'winapi.uuid'
+require 'winapi.clipboard'
 local ffi = require 'ffi'
 
 -- -- info about the monitor which currently has mouse cursor
@@ -28,6 +29,8 @@ local win = winapi.Window{
 IID_IUnknown    = winapi.UuidFromString '00000000-0000-0000-C000-000000000046'
 IID_IDropTarget = winapi.UuidFromString '00000122-0000-0000-C000-000000000046'
 E_UNEXPECTED = 0x8000FFFF
+S_OK = 0
+S_FALSE = 1
 -- TODO(akavel): is [1] required in both of the below structs? or maybe in none?
 IDropTargetVtbl = ffi.new 'IDropTargetVtbl'
 IDropTarget = ffi.new 'IDropTarget'
@@ -49,13 +52,33 @@ IDropTargetVtbl.Release = function(this)
 end
 IDropTargetVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	print 'DragEnter!'
+	local enum = ffi.new 'IEnumFORMATETC*[1]'
+	winapi.checkz(pDataObj.lpVtbl.EnumFormatEtc(pDataObj, winapi.DATADIR_GET, enum))
+	local f = ffi.new 'FORMATETC[1]'
+	for i = 1,20 do
+		-- print(i)
+		f[0].ptd = nil
+		local ok, next = pcall(enum[0].lpVtbl.Next, enum[0], 1, f, nil)
+		if not ok then
+			print('err:', next)
+			next = S_FALSE
+		end
+		-- print('next-ed')
+		if next == S_OK then
+			local name = winapi.CF_NAMES[f[0].cfFormat] or winapi.mbs(winapi.GetClipboardFormatName(f[0].cfFormat)) or ''
+			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f[0].cfFormat, f[0].dwAspect, f[0].tymed, name))
+			if f[0].ptd ~= nil then
+				winapi.CoTaskMemFree(f[0].ptd)
+			end
+		else
+			-- print(i)
+		end
+	end
+	pDataObj.lpVtbl.Release(enum[0])
 	return E_UNEXPECTED
 end
-print(winapi.E_NOINTERFACE)
--- if false then
-	winapi.RegisterDragDrop(win.hwnd, IDropTarget)
-	-- TODO: winapi.RevokeDragDrop()
--- end
+winapi.RegisterDragDrop(win.hwnd, IDropTarget)
+-- TODO: winapi.RevokeDragDrop()
 
 -- pass control to the GUI system & message loop
 os.exit(winapi.MessageLoop())
