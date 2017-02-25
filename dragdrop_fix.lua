@@ -126,7 +126,8 @@ function DoDragDrop(...) return checkz(ole32.DoDragDrop(...)) end
 
 ReleaseStgMedium = ole32.ReleaseStgMedium
 
-function SimpleDropTarget(methods)
+-- Work based on http://www.catch22.net/tuts/drop-target and https://www.codeproject.com/Articles/13601/COM-in-plain-C
+function simpleDropTarget(methods)
 	assert(type(methods)=='table')
 	local IDropTarget = ffi.new 'IDropTarget'
 	IDropTarget.lpVtbl = ffi.new 'IDropTargetVtbl'
@@ -134,11 +135,11 @@ function SimpleDropTarget(methods)
 	IDropTarget.lpVtbl.QueryInterface = function(this, riid, ppvObject) return E_NOINTERFACE end
 	IDropTarget.lpVtbl.AddRef = function(this) return 0 end
 	IDropTarget.lpVtbl.Release = function(this) return 0 end
-	IDropTarget.lpVtbl.DragEnter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
+	IDropTarget.lpVtbl.DragEnter = function(this, ...)
 		if methods.DragEnter == nil then return E_UNEXPECTED end
-		local ok, res = glue.pcall(methods.DragEnter, pDataObj, grfKeyState, pt, pdwEffect)
+		local ok, res = glue.pcall(methods.DragEnter, ...)
 		if not ok then
-			io.stderr:write(res)
+			io.stderr:write('error: '..res..'\n')
 			return E_UNEXPECTED
 		end
 		return res
