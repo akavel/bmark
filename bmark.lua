@@ -72,7 +72,7 @@ local drop_target = simpleDropTarget{
 		local text = dragDropGetData(pDataObj, f):gsub('\0.*$', '')
 		print(text)
 		-- print(string.format('0x%x',pdwEffect[0]))
-		edit.text = html_to_md(extract_text(text))
+		edit.text = html_to_md(extract_text(text)):gsub('\n', '\r\n')
 		edit.enabled = false
 
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
@@ -123,16 +123,19 @@ function extract_text(raw_html_format)
 	end
 	local url = get 'SourceURL'
 	local from, to = 1+get'StartFragment', 0+get'EndFragment'
-	return url.."\r\n"..raw_html_format:sub(from, to)
+	-- TODO(akavel): verify if we have to delete '\r's or not
+	return url.."\n"..raw_html_format:sub(from, to):gsub('\r', '')
 end
 
 -- NOTE: assumes XML-like HTML.
 -- TODO(akavel): make more robust against more html? do we need?
 function html_to_md(html)
-	return html
+	-- TODO(akavel): consider UTC or both local+UTC for timestamp
+	local timestamp = ('{#t%s}'):format(os.date '%Y%m%d_%H%M%S')
+	return timestamp..'\n'..html
 	--[[
 	local md = html
-	expat.parse(html, 
+	expat.parse(html,
 	return md
 	--]]
 end
