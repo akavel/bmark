@@ -1,9 +1,11 @@
 local ffi = require 'ffi'
+local glue = require 'glue'
 local winapi = require 'winapi'
 require 'winapi.clipboard'
 require 'winapi.memory'
 require 'winapi_dragdrop_fix'
 
+-- Work based on http://www.catch22.net/tuts/drop-target and https://www.codeproject.com/Articles/13601/COM-in-plain-C
 function dragDropFormats(pDataObj)
 	local result = {}
 	local enum = ffi.new 'IEnumFORMATETC*[1]'
@@ -43,5 +45,32 @@ function dragDropGetData(pDataObj, formatEtc)
 	winapi.GlobalUnlock(hglobal)
 	winapi.ReleaseStgMedium(medium)
 	return s
+end
+-- Work based on http://www.catch22.net/tuts/drop-target and https://www.codeproject.com/Articles/13601/COM-in-plain-C
+function simpleDropTarget(methods)
+	assert(type(methods)=='table')
+	local IDropTarget = ffi.new 'IDropTarget'
+	IDropTarget.lpVtbl = ffi.new 'IDropTargetVtbl'
+	-- NOTE(akavel): it looks like the default IUnknown methods can be "empty" and RegisterDragDrop will work OK
+	IDropTarget.lpVtbl.QueryInterface = function(this, riid, ppvObject) return winapi.E_NOINTERFACE end
+	IDropTarget.lpVtbl.AddRef = function(this) return 0 end
+	IDropTarget.lpVtbl.Release = function(this) return 0 end
+	-- set user-provided functions, wrapped for security
+	local function wrap(f)
+		return function(this, ...)
+			if f == nil then return winapi.E_UNEXPECTED end
+			local ok, res = glue.pcall(f, ...)
+			if not ok then
+				io.stderr:write('error: '..tostring(res)..'\n')
+				return winapi.E_UNEXPECTED
+			end
+			return res
+		end
+	end
+	IDropTarget.lpVtbl.DragEnter = wrap(methods.DragEnter)
+	IDropTarget.lpVtbl.DragOver  = wrap(methods.DragOver)
+	IDropTarget.lpVtbl.DragLeave = wrap(methods.DragLeave)
+	IDropTarget.lpVtbl.Drop      = wrap(methods.Drop)
+	return IDropTarget
 end
 

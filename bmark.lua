@@ -1,9 +1,14 @@
--- TODO: window
--- TODO: make the window topmost & receiving drag&drop - should display drag&drop info details
--- TODO: the window should accept drag & drop of selected fragment of webpage
+-- (done) window
+-- TODO: make the window topmost
+-- (done) receiving drag&drop - should display drag&drop info details
+-- (done) the window should accept drag & drop of selected fragment of webpage
 -- from firefox ("HTML Format" 0x18b -- see also ClipSpy.exe)
 -- See: http://delphidabbler.com/articles?article=24
 -- TODO: should then convert the HTML to Markdown
+-- TODO: should display the Markdown in textarea, with possibility of editing
+-- TODO: should provide button to append into an .md file, with <a
+-- name="DATETIME"/> anchor [ideally as a markdown extension, e.g. [#...] or
+-- pandoc's {#...} or [](...) or [][...] or [](#...) or #... or []{#...} or something]
 -- TODO: [LATER]: use SQLite to save bookmarks with full text search & display
 -- them for browsing & clicking.
 -- TODO: [LATER] tray icon
@@ -23,10 +28,8 @@ local win = winapi.Window{
 	autoquit = true,
 }
 
--- Work based on http://www.catch22.net/tuts/drop-target and https://www.codeproject.com/Articles/13601/COM-in-plain-C
-local drop_target = winapi.simpleDropTarget{
+local drop_target = simpleDropTarget{
 	DragEnter = function(pDataObj, grfKeyState, pt, pdwEffect)
-		print 'DragEnter!'
 		local formats = dragDropFormats(pDataObj)
 		local f = formats['HTML Format']
 		if not f then
@@ -39,6 +42,12 @@ local drop_target = winapi.simpleDropTarget{
 		f.dwAspect = winapi.DVASPECT_CONTENT
 		f.tymed = winapi.TYMED_HGLOBAL
 		print(dragDropGetData(pDataObj, f))
+		print(string.format('0x%x',pdwEffect[0]))
+		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
+			pdwEffect[0] = winapi.DROPEFFECT_LINK
+		elseif winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_COPY) then
+			pdwEffect[0] = winapi.DROPEFFECT_COPY
+		end
 		return winapi.E_UNEXPECTED
 	end
 }
