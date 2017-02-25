@@ -162,9 +162,11 @@ ole_meta = {__index = function(self, k) return self.lpVtbl[k] end}
 
 -- FIXME(akavel): move below to winapi/ienumformatetc.lua
 
+require'winapi.ienumformatetc'
 ffi.metatype('IEnumFORMATETC', ole_meta)
 
 -- FIXME(akavel): move below to winapi/idataobject.lua
 
+require'winapi.idataobject'
 ffi.metatype('IDataObject', ole_meta)
 

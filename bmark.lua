@@ -8,14 +8,14 @@
 -- them for browsing & clicking.
 -- TODO: [LATER] tray icon
 
+local ffi = require 'ffi'
 local winapi = require 'winapi'
 -- require 'winapi.monitor'
 require 'winapi.windowclass'
 -- require 'winapi.ole'  -- TODO: remove, should not be needed because included via winapi.dragdrop
-require 'dragdrop_fix'
 require 'winapi.clipboard'
 require 'winapi.memory'
-local ffi = require 'ffi'
+require 'dragdrop'
 
 -- -- info about the monitor which currently has mouse cursor
 -- local moninfo = GetMonitorInfo(MonitorFromPoint(GetCursorPos(), MONITOR_DEFAULTTONEAREST))
