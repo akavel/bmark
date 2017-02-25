@@ -45,7 +45,6 @@ local edit = winapi.Edit{
 	dont_hide_selection = true,
 	w = w,
 	h = h,
-	enabled = false,
 }
 
 function edit:on_parent_resizing(windowpos)
@@ -71,7 +70,7 @@ local drop_target = simpleDropTarget{
 		local text = dragDropGetData(pDataObj, f):gsub('\0.*$', '')
 		print(text)
 		-- print(string.format('0x%x',pdwEffect[0]))
-		edit.text = extract_text(text)
+		edit.text = html_to_md(extract_text(text))
 		edit.enabled = false
 
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
@@ -90,6 +89,7 @@ local drop_target = simpleDropTarget{
 	end,
 	DragLeave = function()
 		edit.text = ""
+		edit.enabled = true
 		return winapi.S_OK
 	end,
 	Drop = function(pDataObj, grfKeyState, pt, pdwEffect)
@@ -122,6 +122,17 @@ function extract_text(raw_html_format)
 	local url = get 'SourceURL'
 	local from, to = 1+get'StartFragment', 0+get'EndFragment'
 	return url.."\r\n"..raw_html_format:sub(from, to)
+end
+
+-- NOTE: assumes XML-like HTML.
+-- TODO(akavel): make more robust against more html? do we need?
+function html_to_md(html)
+	return html
+	--[[
+	local md = html
+	expat.parse(html, 
+	return md
+	--]]
 end
 
 -- pass control to the GUI system & message loop
