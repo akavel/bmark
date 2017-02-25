@@ -65,14 +65,12 @@ dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 	winapi.checkz(pDataObj.lpVtbl.EnumFormatEtc(pDataObj, winapi.DATADIR_GET, enum))
 	local f = ffi.new 'FORMATETC'
 	for i = 1,20 do
-		-- print(i)
 		f.ptd = nil
 		local ok, next = pcall(enum[0].lpVtbl.Next, enum[0], 1, f, nil)
 		if not ok then
 			print('err:', next)
 			next = S_FALSE
 		end
-		-- print('next-ed')
 		if next == S_OK then
 			local name = winapi.CF_NAMES[f.cfFormat] or winapi.mbs(winapi.GetClipboardFormatName(f.cfFormat)) or ''
 			print(('%d\t0x%04x 0x%x 0x%02x %s'):format(i, f.cfFormat, f.dwAspect, f.tymed, name))
@@ -82,29 +80,21 @@ dragenter = function(this, pDataObj, grfKeyState, pt, pdwEffect)
 			end
 			if name == 'HTML Format' then
 				if f.dwAspect==1 and f.tymed==1 then
-					print 'med'
 					local medium = ffi.new 'STGMEDIUM'
-					print 'getdata'
 					winapi.checkz(pDataObj.lpVtbl.GetData(pDataObj, f, medium))
-					print 'hglobal'
 					local hglobal = medium.hGlobal
-					print 'lock'
 					p = winapi.checknz(winapi.GlobalLock(hglobal))
-					print 'globsize'
 					local sz = winapi.GlobalSize(hglobal)
 					print('#', sz)
-					print(ffi.string(p, sz))
+					print(ffi.string(p, sz)) -- TODO: cut at '\0' byte
 					-- print(winapi.mbs(ffi.cast('CHAR*', p)))
 					winapi.GlobalUnlock(hglobal)
-					print 'release'
 					winapi.ReleaseStgMedium(medium)
 				else
 					print(('got "HTML Format", but unexpected dwAspect=%d and tymed=%d'):format(
 						f.dwAspect, f.tymed))
 				end
 			end
-		else
-			-- print(i)
 		end
 	end
 	enum[0].lpVtbl.Release(enum[0])
