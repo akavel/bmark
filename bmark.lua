@@ -13,6 +13,7 @@
 -- them for browsing & clicking.
 -- TODO: [LATER] tray icon
 
+local expat = require 'expat'
 local ffi = require 'ffi'
 local winapi = require 'winapi'
 require 'winapi.monitor'
@@ -70,7 +71,7 @@ local drop_target = simpleDropTarget{
 		local text = dragDropGetData(pDataObj, f):gsub('\0.*$', '')
 		print(text)
 		-- print(string.format('0x%x',pdwEffect[0]))
-		edit.text = text
+		edit.text = extract_text(text)
 		edit.enabled = false
 
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
@@ -99,6 +100,29 @@ local drop_target = simpleDropTarget{
 }
 winapi.RegisterDragDrop(win.hwnd, drop_target)
 -- TODO: winapi.RevokeDragDrop()
+
+--[[ example data from Firefox, in utf-8:
+Version:0.9
+StartHTML:00000178
+EndHTML:00000273
+StartFragment:00000212
+EndFragment:00000237
+SourceURL:http://piwnica.org/wiki/Teksty/Na_dunaj_Nastu%c5%9b_rano_po_wod%c4%99
+<html><body>
+<!--StartFragment--><em>Na dunaj Nastu┼Ť</em><!--EndFragment-->
+</body>
+</html>
+--]]
+function extract_text(raw_html_format)
+	-- FIXME(akavel): verify Version and find out how old we support; also
+	-- try to find some official info about the format and versions
+	local function get(key)
+		return raw_html_format:gmatch(key..':[^\n\r]*')():sub(#key+2)
+	end
+	local url = get 'SourceURL'
+	local from, to = 1+get'StartFragment', 0+get'EndFragment'
+	return url.."\r\n"..raw_html_format:sub(from, to)
+end
 
 -- pass control to the GUI system & message loop
 os.exit(winapi.MessageLoop())
