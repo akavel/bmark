@@ -15,18 +15,42 @@
 
 local ffi = require 'ffi'
 local winapi = require 'winapi'
--- require 'winapi.monitor'
+require 'winapi.monitor'
+require 'winapi.editclass'
 require 'winapi.windowclass'
--- require 'winapi.ole'  -- TODO: remove, should not be needed because included via winapi.dragdrop
 require 'dragdrop'
 
 -- -- info about the monitor which currently has mouse cursor
--- local moninfo = GetMonitorInfo(MonitorFromPoint(GetCursorPos(), MONITOR_DEFAULTTONEAREST))
+local moninfo = winapi.GetMonitorInfo(winapi.MonitorFromPoint(winapi.GetCursorPos(), winapi.MONITOR_DEFAULTTONEAREST))
 
+local maxw, maxh = moninfo.work_rect.w, moninfo.work_rect.h
+local w, h = maxw/4, maxh/3
 local win = winapi.Window{
 	title = 'bmark',
 	autoquit = true,
+	-- bottom-right corner of screen
+	x = moninfo.work_rect.left + maxw-w,
+	y = moninfo.work_rect.top  + maxh-h,
+	w = w,
+	h = h,
 }
+
+local edit = winapi.Edit{
+	parent = win,
+	multiline = true,
+	autovscroll = true,
+	autohscroll = true,
+	want_return = true,
+	dont_hide_selection = true,
+	w = w,
+	h = h,
+	enabled = false,
+}
+
+function edit:on_parent_resizing(windowpos)
+	local region = win:get_client_rect()
+	self:resize(region.x2, region.y2)
+end
 
 local effect
 local drop_target = simpleDropTarget{
@@ -42,8 +66,13 @@ local drop_target = simpleDropTarget{
 		end
 		f.dwAspect = winapi.DVASPECT_CONTENT
 		f.tymed = winapi.TYMED_HGLOBAL
-		print(dragDropGetData(pDataObj, f))
-		print(string.format('0x%x',pdwEffect[0]))
+
+		local text = dragDropGetData(pDataObj, f):gsub('\0.*$', '')
+		print(text)
+		-- print(string.format('0x%x',pdwEffect[0]))
+		edit.text = text
+		edit.enabled = false
+
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
 			effect = winapi.DROPEFFECT_LINK
 		elseif winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_COPY) then
@@ -55,6 +84,15 @@ local drop_target = simpleDropTarget{
 		return winapi.S_OK
 	end,
 	DragOver = function(grfKeyState, pt, pdwEffect)
+		pdwEffect[0] = effect
+		return winapi.S_OK
+	end,
+	DragLeave = function()
+		edit.text = ""
+		return winapi.S_OK
+	end,
+	Drop = function(pDataObj, grfKeyState, pt, pdwEffect)
+		edit.enabled = true
 		pdwEffect[0] = effect
 		return winapi.S_OK
 	end,
