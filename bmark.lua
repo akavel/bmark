@@ -5,12 +5,14 @@
 -- from firefox ("HTML Format" 0x18b -- see also ClipSpy.exe)
 -- See: http://delphidabbler.com/articles?article=24
 -- TODO: should then convert the HTML to Markdown
--- TODO: should display the Markdown in textarea, with possibility of editing
--- TODO: should provide button to append into an .md file, with <a
+-- (done) should display the Markdown in textarea, with possibility of editing
+-- (done) should provide button to append into an .md file, with <a
 -- name="DATETIME"/> anchor [ideally as a markdown extension, e.g. [#...] or
 -- pandoc's {#...} or [](...) or [][...] or [](#...) or #... or []{#...} or something]
 -- TODO: [LATER]: use SQLite to save bookmarks with full text search & display
 -- them for browsing & clicking.
+-- TODO: invent some interface (GUI) for browsing the SQLite DB (grepping the list of bookmarks)
+-- TODO: invent interface for editing; write a copy of file, then remove old, when updating
 -- TODO: [LATER] tray icon
 
 FILE = '/Mateusz/bmark.md'
@@ -62,7 +64,6 @@ function add:on_click()
 			win.hwnd)
 	end
 	if edit.text:gsub('%s*$','') == '' then
-		-- FIXME(akavel): trim(edit.text)
 		msg('Not adding, nothing to add', true)
 		return
 	end
