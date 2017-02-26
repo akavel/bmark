@@ -54,13 +54,13 @@ typedef struct IDropTargetVtbl {
 		IDropTarget * This,
 		IDataObject *pDataObj,
 		DWORD grfKeyState,
-		]]..(ffi.abi'32bit' and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
+		]]..((false and ffi.abi'32bit') and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
 		DWORD *pdwEffect);
 
 	HRESULT ( __stdcall *DragOver )(
 		IDropTarget * This,
 		DWORD grfKeyState,
-		]]..(ffi.abi'32bit' and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
+		]]..((false and ffi.abi'32bit') and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
 		DWORD *pdwEffect);
 
 	HRESULT ( __stdcall *DragLeave )(
@@ -70,7 +70,7 @@ typedef struct IDropTargetVtbl {
 		IDropTarget * This,
 		IDataObject *pDataObj,
 		DWORD grfKeyState,
-		]]..(ffi.abi'32bit' and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
+		]]..((false and ffi.abi'32bit') and 'LONG x, LONG y' or 'DWORD64 pt')..[[,
 		DWORD *pdwEffect);
 
 } IDropTargetVtbl;
