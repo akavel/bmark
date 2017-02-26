@@ -15,14 +15,15 @@
 
 FILE = '/Mateusz/bmark.md'
 
-local expat = require 'expat'
 local ffi = require 'ffi'
 local winapi = require 'winapi'
 require 'winapi.buttonclass'
 require 'winapi.editclass'
+require 'winapi.messagebox'
 require 'winapi.monitor'
 require 'winapi.windowclass'
 require 'dragdrop'
+require 'html_to_md'
 
 -- -- info about the monitor which currently has mouse cursor
 local moninfo = winapi.GetMonitorInfo(winapi.MonitorFromPoint(winapi.GetCursorPos(), winapi.MONITOR_DEFAULTTONEAREST))
@@ -54,6 +55,39 @@ local add = winapi.Button{
 	parent = win,
 	text = '&Add',
 }
+function add:on_click()
+	local function msg(text, ok)
+		winapi.MessageBox(text, 'bmark',
+			winapi.MB_OK + (ok and winapi.MB_ICONINFORMATION or winapi.MB_ICONERROR),
+			win.hwnd)
+	end
+	if edit.text:gsub('%s*$','') == '' then
+		-- FIXME(akavel): trim(edit.text)
+		msg('Not adding, nothing to add', true)
+		return
+	end
+	-- TODO(akavel): consider UTC or both local+UTC for timestamp
+	local timestamp = ('{#t%s}'):format(os.date '%Y%m%d_%H%M%S')
+
+	local f, err = io.open(FILE, 'ab')  -- TODO(akavel): 'a+b' and start by reading the file and counting notes?
+	if not f then
+		msg('Error: '..err)
+		return
+	end
+	local chunk = timestamp..'\n'..edit.text:gsub('\r',''):gsub('\n*$', '\n')
+	local ok, err = f:write(chunk)
+	if not ok then
+		msg('Error: '..err)
+		f:close()
+		return
+	end
+	local ok, err = f:close()
+	if not ok then
+		msg('Error: '..err)
+		return
+	end
+	edit.text = ""
+end
 
 function win:on_resizing()
 	local region = win:get_client_rect()
@@ -81,7 +115,8 @@ local drop_target = simpleDropTarget{
 		local text = dragDropGetData(pDataObj, f):gsub('\0.*$', '')
 		print(text)
 		-- print(string.format('0x%x',pdwEffect[0]))
-		edit.text = html_to_md(extract_text(text)):gsub('\n', '\r\n')
+		local fragment = extract_text(text)
+		edit.text = html_to_md('<html>'..fragment..'</html>'):gsub('\n', '\r\n')
 		edit.enabled = false
 
 		if winapi.getbit(pdwEffect[0], winapi.DROPEFFECT_LINK) then
@@ -134,19 +169,6 @@ function extract_text(raw_html_format)
 	local from, to = 1+get'StartFragment', 0+get'EndFragment'
 	-- TODO(akavel): verify if we have to delete '\r's or not
 	return url.."\n"..raw_html_format:sub(from, to):gsub('\r', '')
-end
-
--- NOTE: assumes XML-like HTML.
--- TODO(akavel): make more robust against more html? do we need?
-function html_to_md(html)
-	-- TODO(akavel): consider UTC or both local+UTC for timestamp
-	local timestamp = ('{#t%s}'):format(os.date '%Y%m%d_%H%M%S')
-	return timestamp..'\n'..html
-	--[[
-	local md = html
-	expat.parse(html,
-	return md
-	--]]
 end
 
 -- pass control to the GUI system & message loop
