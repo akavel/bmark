@@ -12,6 +12,9 @@ function main()
 			deleted boolean not null
 		)
 	]])
+	assert(conn:execute [[
+		create virtual table email using fts5(sender,title,body)
+	]])
 
 	-- read notes into sqlite
 	local entry = {}
