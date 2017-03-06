@@ -55,37 +55,69 @@ function luaven.extend(pattern, suffix)
 	end)
 end
 
+-- luaven.append generates all new patterns (of Levenhstein distance up to
+-- max_level) which become possible only when suffix is added to old patterns.
+-- Suffix is assumed atomic (nondivisable) - usually it should be a single
+-- character (possibly UTF-8 one).
+--
+-- In other words: if pattern has distance L from a word, then result has
+-- distance L+1 from word+suffix.
+--
+-- Example:
+--  t = lua.append(nil, 'h', 2)
+--  assert(t.suffix=='h')
+--  assert(t[0]['h'])
+--  assert(t[1]['.h'] and t[1]['h.'] and t[1]['.?'])
+--  t0, t = t, lua.append(t, 'i', 2)
+--  assert(t.suffix=='i' and t.old==t0)
+--  assert(t[0]['hi'])
+--  for _,s in ipairs{'.hi', 'h.i', '.?i', 'hi.', 'h.?'} do
+--    assert(t[1][s])
+--  end
+--  for _,s in ipairs{'.h.i', '.hi.', 'h..i', 'h.i.', 'hi..', 
+--  assert(t[1]['.hi'] and t[1]['
+--  -- {suffix="h",
+--  --  [0]={ ["h"]=true },
+--  --  [1]={ [".]
+--
 -- TODO: doc
+-- TODO: example
 -- TODO: Damerau
 -- TODO: merge into luaven.extend, depending on 1st arg
-function luaven.append(old_levels, suffix, max_level)
-	local old_levels = old_levels or {}
+function luaven.append(old, suffix, max_level)
+	local old = old or {}
 
 	local new = {
-		old=old_levels,
+		old=old,
 		suffix=suffix,
 	}
 	local init = { [0]={ ['']=true } }
 	for i = 0,max_level do
 		local new_level = {}
 		-- level L .. suffix = level L
-		for k in pairs(old_levels[i] or init[i] or {}) do
+		for k in pairs(old[i] or init[i] or {}) do
 			new_level[k..suffix] = true
 		end
 		-- luaven.extend(level L-1, suffix) = level L
-		if i>0 then
-			for k in pairs(old_levels[i-1] or init[i-1] or {}) do
+		if i>=1 then
+			for k in pairs(old[i-1] or init[i-1] or {}) do
 				-- IMPORTANT: if modifying below, modify luaven.extend too
 				new_level[k .. '.' .. suffix] = true
 				new_level[k .. suffix .. '.'] = true
 				new_level[k .. '.?'] = true
 			end
 		end
+		-- other...
+		-- FIXME: generate 'hello..' for i==2 etc.
+		-- if i>=2 then
+		-- 	for k in pairs(old[i-2] or init[i-2] or {}) do
+		-- 		new_level[k .. ('.'):rep(
+
 		-- -- older(L-1) + suffix + old(suffix) = L  -- Damerau 1
-		-- local older = old_levels.old
+		-- local older = old.old
 		-- if i>0 and older then
 		-- 	for k in pairs(older[i-1] or start) do
-		-- 		new_level[k .. suffix .. old_levels.suffix] = true
+		-- 		new_level[k .. suffix .. old.suffix] = true
 		-- 	end
 		-- end
 		-- local even_older = (older or {}).old
@@ -101,21 +133,23 @@ end
 
 ---- DEMO/TEST ----
 if not ... then
+	-- local word = 'hello'
+	local word = 'hi'
+
 	-- luaven.all
-	for s in luaven.all 'hello' do
+	for s in luaven.all(word) do
 		print(s)
 	end
 
 	-- luaven.append
 	local app = {}
-	local word = 'hello'
 	for i=1,#word do
 		app = luaven.append(app, word:sub(i,i), 2)
 	end
 
 	-- luaven.all + luaven.all
 	local dist2 = {}
-	for s in luaven.all 'hello' do
+	for s in luaven.all(word) do
 		for s2 in luaven.all(s) do
 			dist2[s2] = true
 		end
