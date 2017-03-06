@@ -40,6 +40,7 @@ local win = winapi.Window{
 	y = moninfo.work_rect.top  + maxh-h,
 	w = w,
 	h = h,
+	topmost = true,
 }
 
 local edit = winapi.Edit{
