@@ -89,6 +89,9 @@ function add:on_click()
 		return
 	end
 	edit.text = ""
+
+	-- FIXME - DEBUGGING
+	collectgarbage()
 end
 
 function win:on_resizing()
@@ -100,8 +103,9 @@ end
 win:on_resizing()
 
 local effect
-local drop_target = simpleDropTarget{
+drop_target = simpleDropTarget{
 	DragEnter = function(pDataObj, grfKeyState, pt, pdwEffect)
+		print '\n-- DragEnter --\n'
 		local formats = dragDropFormats(pDataObj)
 		local f = formats['HTML Format']
 		if not f then
@@ -146,7 +150,7 @@ local drop_target = simpleDropTarget{
 		return winapi.S_OK
 	end,
 }
-winapi.RegisterDragDrop(win.hwnd, drop_target)
+drop_target:RegisterDragDrop(win)
 -- TODO: winapi.RevokeDragDrop()
 
 --[[ example data from Firefox, in utf-8:

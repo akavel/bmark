@@ -50,11 +50,18 @@ end
 function simpleDropTarget(methods)
 	assert(type(methods)=='table')
 	local IDropTarget = ffi.new 'IDropTarget'
-	IDropTarget.lpVtbl = ffi.new 'IDropTargetVtbl'
+	local vtable = ffi.new 'IDropTargetVtbl'
+	IDropTarget.lpVtbl = vtable
 	-- NOTE(akavel): it looks like the default IUnknown methods can be "empty" and RegisterDragDrop will work OK
-	IDropTarget.lpVtbl.QueryInterface = function(this, riid, ppvObject) return winapi.E_NOINTERFACE end
-	IDropTarget.lpVtbl.AddRef = function(this) return 0 end
-	IDropTarget.lpVtbl.Release = function(this) return 0 end
+	IDropTarget.lpVtbl.QueryInterface = function(this, riid, ppvObject)
+		-- print '\n** QueryInterface **\n'
+		return winapi.E_NOINTERFACE end
+	IDropTarget.lpVtbl.AddRef = function(this)
+		-- print '\n** AddRef **\n'
+		return 0 end
+	IDropTarget.lpVtbl.Release = function(this)
+		-- print '\n** Release **\n'
+		return 0 end
 	-- set user-provided functions, wrapped for security
 	local function wrap(f)
 		return function(this, ...)
@@ -71,6 +78,27 @@ function simpleDropTarget(methods)
 	IDropTarget.lpVtbl.DragOver  = wrap(methods.DragOver)
 	IDropTarget.lpVtbl.DragLeave = wrap(methods.DragLeave)
 	IDropTarget.lpVtbl.Drop      = wrap(methods.Drop)
-	return IDropTarget
+	-- NOTE(akavel): below object tries to prevent
+	-- lpVtbl from being GCed.
+	local drop_target = {
+		handle = IDropTarget,
+		vtable = vtable,
+		RegisterDragDrop = function(self, hwnd)
+			local hwnd = type(hwnd)=='table' and hwnd.hwnd or hwnd
+			return winapi.RegisterDragDrop(hwnd, self.handle)
+		end,
+		-- TODO: winapi.RevokeDragDrop()
+	}
+	-- TODO(akavel): remove below debugging functions once it's confirmed stuff works ok
+	ffi.gc(IDropTarget, function()
+		print '\nGC IDROPTARGET !!!!\n'
+	end)
+	ffi.gc(vtable, function()
+		print '\nGC IDROPTARGET.LPVTBL !!!\n'
+	end)
+	setmetatable(drop_target, {__gc=function()
+		print '\nGC drop_target !!!\n'
+	end})
+	return drop_target
 end
 
