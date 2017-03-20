@@ -3,6 +3,7 @@ local expat = require 'expat'
 -- NOTE: assumes XML-like HTML.
 -- TODO(akavel): make more robust against more html? do we need?
 function html_to_md(html)
+	local html = '<?xml version="1.0" encoding="UTF-8"?>\n' .. html
 	print(html)
 
 	local handler = coroutine.wrap(function()

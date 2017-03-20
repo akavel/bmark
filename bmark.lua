@@ -174,7 +174,7 @@ function extract_text(raw_html_format)
 	local url = get 'SourceURL'
 	local from, to = 1+get'StartFragment', 0+get'EndFragment'
 	-- TODO(akavel): verify if we have to delete '\r's or not
-	return url.."\n"..raw_html_format:sub(from, to):gsub('\r', '')
+	return url:gsub('&', '&amp;').."\n"..raw_html_format:sub(from, to):gsub('\r', '')
 end
 
 -- pass control to the GUI system & message loop
