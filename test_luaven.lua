@@ -15,6 +15,8 @@ function main(...)
 		patterns[0][p] = true
 	end
 
+	local watch = Stopwatch()
+
 	-- generate patterns up to Levenshtein-Damerau distance 2 from original
 	-- pattern
 	for i = 1,2 do
@@ -49,6 +51,8 @@ function main(...)
 		patterns = searches
 	end
 
+	watch:lap('-- +%fs patterns generated')
+
 	-- iterate entries and try to rank them by how they match pattern. Keep
 	-- at most max_n results.
 	-- TODO: keep *most recent* results (reverse order)
@@ -78,6 +82,7 @@ function main(...)
 			results[#results+1] = {rank, time, note, snippet}
 		end
 	end
+	watch:lap('-- +%fs entries read and ranked')
 	table.sort(results, function(a, b)
 		if a[1]~=b[1] then return a[1]>b[1] end
 		return a[2]>b[2]
@@ -85,11 +90,27 @@ function main(...)
 	while #results > max_n do
 		table.remove(results)
 	end
+	watch:lap('-- +%fs entries sorted and trimmed')
+	watch:total('-- %fs total')
 
 	-- print top ranking results and snippets
 	for _, v in ipairs(results) do
 		print(string.format('%f \t ...%s...\n\t%s\n\n', v[1], v[4], v[3]:gsub('\n', '\n\t')))
 	end
+end
+
+function Stopwatch()
+	return setmetatable({t0=os.time(), t1=os.time()}, {__index={
+		lap = function(self, fmt_secs, ...)
+			local t2 = os.time()
+			print(string.format(fmt_secs, os.difftime(t2, self.t1), ...))
+			self.t1 = t2
+		end,
+		total = function(self, fmt_secs, ...)
+			local t2 = os.time()
+			print(string.format(fmt_secs, os.difftime(t2, self.t0), ...))
+		end,
+	}})
 end
 
 function iterate_entries(file)
