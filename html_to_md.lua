@@ -2,6 +2,9 @@ local expat = require 'expat'
 
 -- NOTE: assumes XML-like HTML.
 -- TODO(akavel): make more robust against more html? do we need?
+-- TODO(akavel): try https://github.com/akavel/html
+-- TODO(akavel): try http://source.netsurf-browser.org/libhubbub.git/tree/src/tokeniser/tokeniser.c or
+-- https://github.com/html5lib/html5lib-python/blob/master/html5lib/html5parser.py
 function html_to_md(html)
 	local html = '<?xml version="1.0" encoding="UTF-8"?>\n' .. html
 	print(html)
